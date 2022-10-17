@@ -4,6 +4,7 @@ import { useHistory } from "react-router-dom";
 
 // styles
 import "./Create.css";
+import { projectFirestore } from "../../firebase/config";
 
 export default function Create() {
   const [title, setTitle] = useState("");
@@ -13,17 +14,30 @@ export default function Create() {
   const [ingredients, setIngredients] = useState([]);
   const ingredientInput = useRef(null);
 
-  const { postData, data } = useFetch("http://localhost:3000/recipes", "POST");
   const history = useHistory();
 
-  const handleSubmit = (e) => {
+  //handleSubmit function is an async, await function
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    postData({
+
+    // variable for each doc (recipe)
+    const doc = {
       title,
       ingredients,
       method,
       cookingTime: cookingTime + " minutes",
-    });
+    };
+
+    //adding the recipe to Firebase database
+    //surround it try catch block
+    try {
+      //await is to intentionally do the below action first, then push to firebase db.
+      await projectFirestore.collection("recipes").add(doc);
+      //push user back to homepage after adding recipe to database
+      history.push("/");
+    } catch (err) {
+      console.log(err);
+    }
   };
 
   //function to handle adding each ing to list (unique items)
@@ -37,13 +51,6 @@ export default function Create() {
     setNewIngredient("");
     ingredientInput.current.focus();
   };
-
-  // redirect the user when we get data response
-  useEffect(() => {
-    if (data) {
-      history.push("/");
-    }
-  }, [data, history]);
 
   return (
     <div className="create">
